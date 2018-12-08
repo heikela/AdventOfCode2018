@@ -30,29 +30,32 @@ namespace Day2
             }
             System.Console.WriteLine($"Checksum = {doubleCount * tripleCount}");
 
-            var sorted = lines.OrderBy(s => s);
             string answer = null;
-            sorted.Aggregate((prev, current) =>
+            string[] lineArray = lines.ToArray();
+            for (int i = 0; answer == null && i < lineArray.Count(); ++i)
             {
-                var errors = 0;
-                var matching = "";
-                for (int i = 0; i < current.Length; ++i)
+                for (int j = i + 1; j < lineArray.Count(); ++j)
                 {
-                    if (current[i] == prev[i])
+                    var errors = 0;
+                    var matching = "";
+                    for (int c = 0; c < lineArray[i].Length; ++c)
                     {
-                        matching += current[i];
-                    } else
+                        if (lineArray[i][c] == lineArray[j][c])
+                        {
+                            matching += lineArray[i][c];
+                        }
+                        else
+                        {
+                            ++errors;
+                        }
+                    }
+                    if (errors == 1)
                     {
-                        ++errors;
+                        answer = matching;
+                        break;
                     }
                 }
-                if (errors == 1)
-                {
-                    answer = matching;
-                }
-                return current;
-            });
-
+            }
             System.Console.WriteLine($"Common code = {answer}");
 
         }
