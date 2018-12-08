@@ -11,10 +11,11 @@ namespace Day3
     {
         static void Main(string[] args)
         {
+            const int fabricSize = 1000;
             var lines = File.ReadLines("../../../input.txt");
-            HashSet<int>[,] fabric = new HashSet<int>[1000, 1000];
+            HashSet<int>[,] fabric = new HashSet<int>[fabricSize, fabricSize];
             string pattern = "#(\\d+) @ (\\d+),(\\d+): (\\d+)x(\\d+)";
-            HashSet<int> ids = new HashSet<int>();
+            HashSet<int> idsWithoutConflicts = new HashSet<int>();
             foreach (string line in lines)
             {
                 var match = Regex.Match(line, pattern);
@@ -23,7 +24,7 @@ namespace Day3
                 int y = int.Parse(match.Groups[3].Value);
                 int w = int.Parse(match.Groups[4].Value);
                 int h = int.Parse(match.Groups[5].Value);
-                ids.Add(id);
+                idsWithoutConflicts.Add(id);
                 for (var xx = x; xx < x + w; ++xx)
                 {
                     for (var yy = y; yy < y + h; ++yy)
@@ -39,35 +40,17 @@ namespace Day3
             }
 
             int duplicated = 0;
-            for (int x = 0; x < 1000; ++x)
+            foreach (HashSet<int> claims in fabric)
             {
-                for (int y = 0; y < 1000; ++y)
+                if (claims != null && claims.Count() > 1)
                 {
-                    if (fabric[x,y] != null && fabric[x,y].Count() > 1)
-                    {
-                        duplicated++;
-                    }
+                    duplicated++;
+                    idsWithoutConflicts.ExceptWith(claims);
                 }
             }
-            System.Console.WriteLine($"There are {duplicated} squares used by more than one plan");
+            Console.WriteLine($"There are {duplicated} squares used by more than one plan");
 
-            for (int x = 0; x < 1000; ++x)
-            {
-                for (int y = 0; y < 1000; ++y)
-                {
-                    if (fabric[x, y] != null && fabric[x, y].Count() > 1)
-                    {
-                        foreach(int id in fabric[x,y])
-                        {
-                            if (ids.Contains(id))
-                            {
-                                ids.Remove(id);
-                            }
-                        }
-                    }
-                }
-            }
-            System.Console.WriteLine($"Masterplan ID is {ids.First()}.");
+            Console.WriteLine($"The claim with no overlapping claims has ID: {idsWithoutConflicts.First()}.");
 
         }
     }
