@@ -7,35 +7,38 @@ namespace Day6
 {
     class Program
     {
-        static int Dist(IEnumerable<int> xy, int x, int y)
+        static int Dist((int x, int y) p1, (int x, int y) p2)
         {
-            int cx = xy.First();
-            int cy = xy.Skip(1).First();
-            return Math.Abs(cx - x) + Math.Abs(cy - y);
+            return Math.Abs(p1.x - p2.x) + Math.Abs(p1.y - p2.y);
+        }
+
+        static void ExcludeFromSafest(HashSet<int> safest, IEnumerable<int> toExclude)
+        {
+            safest.ExceptWith(toExclude);
         }
 
         static void Main(string[] args)
         {
             var lines = File.ReadLines("../../../input.txt");
-            var coords = lines.Select(l => l.Split(',').Select(int.Parse));
-            var minX = coords.Select(c => c.First()).Min() - 1;
-            var maxX = coords.Select(c => c.First()).Max() + 2;
-            var minY = coords.Select(c => c.Skip(1).First()).Min() - 1;
-            var maxY = coords.Select(c => c.Skip(1).First()).Max() + 2;
-            int x, y;
+            var coords = lines
+                .Select(l => l.Split(',').Select(int.Parse))
+                .Select(xySequence => (x: xySequence.First(), y: xySequence.Skip(1).First()));
+            var minX = coords.Select(point => point.x).Min() - 1;
+            var maxX = coords.Select(point => point.x).Max() + 1;
+            var minY = coords.Select(point => point.y).Min() - 1;
+            var maxY = coords.Select(point => point.y).Max() + 1;
 
-            /*
-            var closest = new Dictionary<(int, int), int>();
-            for (x = minX; x < maxX; ++x)
+            Dictionary<(int x, int y), int> closestCoord = new Dictionary<(int x, int y), int>();
+            for (int x = minX; x <= maxX; ++x)
             {
-                for (y = minY; y < maxY; ++y)
+                for (int y = minY; y <= maxY; ++y)
                 {
                     int i = 0;
                     int minDist = int.MaxValue;
                     int minId = -1;
                     foreach (var xy in coords)
                     {
-                        int dist = Dist(xy, x, y);
+                        int dist = Dist(xy, (x, y));
                         if (dist == minDist)
                         {
                             minId = -1;
@@ -47,84 +50,22 @@ namespace Day6
                         }
                         ++i;
                     }
-                    closest.Add((x, y), minId);
+                    closestCoord.Add((x, y), minId);
                 }
             }
-            var potentialWinners = new HashSet<int>();
-            {
-                int i = 0;
-                foreach (var _ in coords)
-                {
-                    potentialWinners.Add(i);
-                    ++i;
-                }
-            }
-            x = minX;
-            for (y = minY; y < maxY; ++y)
-            {
-                int infiniteId = closest[(x, y)];
-                if (infiniteId != -1)
-                {
-                    if (potentialWinners.Contains(infiniteId))
-                    {
-                        potentialWinners.Remove(infiniteId);
-                    }
-                }
-            }
-            x = maxX - 1;
-            for (y = minY; y < maxY; ++y)
-            {
-                int infiniteId = closest[(x, y)];
-                if (infiniteId != -1)
-                {
-                    if (potentialWinners.Contains(infiniteId))
-                    {
-                        potentialWinners.Remove(infiniteId);
-                    }
-                }
-            }
-            y = minY;
-            for (x = minX; x < maxX; ++x)
-            {
-                int infiniteId = closest[(x, y)];
-                if (infiniteId != -1)
-                {
-                    if (potentialWinners.Contains(infiniteId))
-                    {
-                        potentialWinners.Remove(infiniteId);
-                    }
-                }
-            }
-            y = maxY - 1;
-            for (x = minX; x < maxX; ++x)
-            {
-                int infiniteId = closest[(x, y)];
-                if (infiniteId != -1)
-                {
-                    if (potentialWinners.Contains(infiniteId))
-                    {
-                        potentialWinners.Remove(infiniteId);
-                    }
-                }
-            }
+            var potentialSafest = new HashSet<int>(Enumerable.Range(0, coords.Count()));
+            ExcludeFromSafest(potentialSafest, Enumerable.Range(minY, maxY - minY + 1).Select(y => closestCoord[(minX, y)]));
+            ExcludeFromSafest(potentialSafest, Enumerable.Range(minY, maxY - minY + 1).Select(y => closestCoord[(maxX, y)]));
+            ExcludeFromSafest(potentialSafest, Enumerable.Range(minX, maxX - minX + 1).Select(x => closestCoord[(x, minY)]));
+            ExcludeFromSafest(potentialSafest, Enumerable.Range(minX, maxX - minX + 1).Select(x => closestCoord[(x, maxY)]));
 
-            var winCounts = new Dictionary<int, int>();
-            for (x = minX; x < maxX; ++x)
+            var winCounts = new Dictionary<int, int>(Enumerable.Range(0, coords.Count()).Select(i => new KeyValuePair<int, int>(i, 0)));
+
+            foreach (int closest in closestCoord.Values)
             {
-                for (y = minY; y < maxY; ++y)
+                if (potentialSafest.Contains(closest))
                 {
-                    int closestToXY = closest[(x, y)];
-                    if (closestToXY != -1 && potentialWinners.Contains(closestToXY))
-                    {
-                        if (!winCounts.ContainsKey(closestToXY))
-                        {
-                            winCounts.Add(closestToXY, 1);
-                        }
-                        else
-                        {
-                            winCounts[closestToXY]++;
-                        }
-                    }
+                    winCounts[closest]++;
                 }
             }
 
@@ -140,32 +81,41 @@ namespace Day6
                 }
             }
 
-            Console.WriteLine($"Winner is {maxClosest}");
+            Console.WriteLine($"If coords are bad, the safest of them is alone in a region of size {maxClosest}");
 
-            */
-            maxX = maxX + 50;
-            minX = minX - 50;
-            maxY += 50;
-            minY -= 50;
-            int safeRegionSize = 0;
-            Console.WriteLine($"The last point is = {coords.Last().First()},{coords.Last().Skip(1).First()}");
-            for (x = minX; x < maxX; ++x)
+            const int maxDistanceSum = 10000;
+            int coordCount = coords.Count();
+            int marginRequired = maxDistanceSum / coordCount;
+            maxX += marginRequired;
+            minX -= marginRequired;
+            maxY += marginRequired;
+            minY -= marginRequired;
+            int goodRegionSize = 0;
+            for (int x = minX; x <= maxX; ++x)
             {
-                for (y = minY; y < maxY; ++y)
+                for (int y = minY; y <= maxY; ++y)
                 {
-                    int total = coords.Select(c => Dist(c, x, y)).Sum();
-                    if (total < 10000)
+                    int total = coords.Select(c => Dist(c, (x, y))).Sum();
+                    if (total < maxDistanceSum)
                     {
-                       // Console.WriteLine($"For point {x},{y} the total distance is: {total}");
-                        ++safeRegionSize;
+                        ++goodRegionSize;
                         if (x == minX || x == maxX -1 || y == minY || y == maxY - 1)
                         {
                             Console.WriteLine($"Error: not considering wide enough area. extreme point {x},{y} qualifies so further points may too.");
                         }
+                    } else
+                    {
+                        int offBy = total - maxDistanceSum;
+                        int offByPerCoord = offBy / coordCount;
+                        if (offByPerCoord > 1)
+                        {
+                            // We know that we can skip this many steps ahead without skipping over parts of the good region
+                            y += offByPerCoord - 1;
+                        }
                     }
                 }
             }
-            Console.WriteLine($"Safe size {safeRegionSize}");
+            Console.WriteLine($"Good region size if points are good: {goodRegionSize}");
         }
     }
 }
