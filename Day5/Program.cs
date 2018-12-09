@@ -7,30 +7,6 @@ namespace Day5
 {
     class Program
     {
-        static string Collapsed(string input)
-        {
-            return input.Aggregate("", (prefix, current) =>
-            {
-                if (prefix.Count() == 0)
-                {
-                    return prefix + current;
-                }
-                if (char.ToLower(prefix.Last()) != char.ToLower(current))
-                {
-                    return prefix + current;
-                }
-                if (char.IsLower(prefix.Last()) && char.IsLower(current))
-                {
-                    return prefix + current;
-                }
-                if (char.IsUpper(prefix.Last()) && char.IsUpper(current))
-                {
-                    return prefix + current;
-                }
-                return prefix.Substring(0, prefix.Length - 1);
-            });
-        }
-
         static int CollapsedLen(IEnumerable<char> input)
         {
             Stack<char> reversePrefix = new Stack<char>();
@@ -63,9 +39,6 @@ namespace Day5
             var lines = File.ReadLines("../../../input.txt");
             var polymer = lines.Aggregate((a, b) => a + b);
 
-/*            var collapsed = Collapsed(polymer);
-            Console.WriteLine($"Length of resulting polymer is {collapsed.Count()}");
-*/
             Console.WriteLine($"Length of resulting polymer is {CollapsedLen(polymer)}");
 
             HashSet<char> letters = new HashSet<char>();
@@ -79,13 +52,10 @@ namespace Day5
 
             foreach (char c in letters)
             {
-                //                var shorter = Collapsed(polymer.Where(cc => char.ToLower(cc) != c).Aggregate<char, string>("", (p, cc) => p + cc));
-                var shorter = CollapsedLen(polymer.Where(cc => char.ToLower(cc) != c));
-//                if (shorter.Length < minLen)
-                if (shorter < minLen)
+                var collapsedLen = CollapsedLen(polymer.Where(cc => char.ToLower(cc) != c));
+                if (collapsedLen < minLen)
                     {
-                    //                        minLen = shorter.Length;
-                    minLen = shorter;
+                    minLen = collapsedLen;
                     minChar = c;
                 }
                 Console.WriteLine($"Checked {c}. So far the best char to remove is {minChar}, resulting in len = {minLen}");
