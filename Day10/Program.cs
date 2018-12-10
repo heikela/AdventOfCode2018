@@ -6,38 +6,81 @@ using System.Text.RegularExpressions;
 
 namespace Day10
 {
+    struct IntPoint2D
+    {
+        public int X { get; set; }
+        public int Y { get; set; }
+        public IntPoint2D(int x, int y)
+        {
+            X = x;
+            Y = y;
+        }
+        public static IntPoint2D operator +(IntPoint2D a, IntPoint2D b)
+        {
+            return new IntPoint2D(a.X + b.X, a.Y + b.Y);
+        }
+        public static IntPoint2D operator -(IntPoint2D a, IntPoint2D b)
+        {
+            return new IntPoint2D(a.X - b.X, a.Y - b.Y);
+        }
+
+        public static IntPoint2D operator *(int m, IntPoint2D point)
+        {
+            return new IntPoint2D(point.X * m, point.Y * m);
+        }
+
+        public int ManhattanDist()
+        {
+            return Math.Abs(X) + Math.Abs(Y);
+        }
+        public int ManhattanDist(IntPoint2D other)
+        {
+            return (this - other).ManhattanDist();
+        }
+    }
+
+    struct Particle
+    {
+        public IntPoint2D Pos { get; set; }
+        public IntPoint2D Vel { get; set; }
+        public Particle(IntPoint2D pos, IntPoint2D vel)
+        {
+            Pos = pos;
+            Vel = vel;
+        }
+        public Particle Step(int dt = 1)
+        {
+            return new Particle(Pos + dt * Vel, Vel);
+        }
+    }
+
     class Program
     {
-        static (int x, int y, int vx, int vy) Step((int x, int y, int vx, int vy) prev, int dt)
+        static IEnumerable<Particle> Step(IEnumerable<Particle> prev, int dt = 1)
         {
-            return (x: prev.x + prev.vx * dt, y: prev.y + prev.vy * dt, vx: prev.vx, vy: prev.vy);
+            return prev.Select(particle => particle.Step(dt));
         }
 
-        static IEnumerable<(int x, int y, int vx, int vy)> Step(IEnumerable<(int x, int y, int vx, int vy)> prev, int dt = 1)
-        {
-            return prev.Select(particle => Step(particle, dt));
-        }
-
-        static (int minX, int minY, int maxX, int maxY) Bounds(IEnumerable<(int x, int y, int vx, int vy)> particles)
+        static (int minX, int minY, int maxX, int maxY) Bounds(IEnumerable<Particle> particles)
         {
             return (
-                minX: particles.Select(p => p.x).Min(),
-                minY: particles.Select(p => p.y).Min(),
-                maxX: particles.Select(p => p.x).Max(),
-                maxY: particles.Select(p => p.y).Max()
+                minX: particles.Select(p => p.Pos.X).Min(),
+                minY: particles.Select(p => p.Pos.Y).Min(),
+                maxX: particles.Select(p => p.Pos.X).Max(),
+                maxY: particles.Select(p => p.Pos.Y).Max()
             );
         }
 
-        static void OutputParticles(IEnumerable<(int x, int y, int vx, int vy)> particles)
+        static void OutputParticles(IEnumerable<Particle> particles)
         {
             var bb = Bounds(particles);
             for (int y = bb.minY; y <= bb.maxY; ++y)
             {
-                var particlesOnLine = particles.Where(p => p.y == y).OrderBy(p => p.x);
+                var particlesOnLine = particles.Where(p => p.Pos.Y == y);
 //                var nextParticle = particlesOnLine.GetEnumerator();
                 for (int x = bb.minX; x <= bb.maxX; ++x)
                 {
-                    if (particlesOnLine.Any(p => p.x == x))
+                    if (particlesOnLine.Any(p => p.Pos.X == x))
                     {
                         Console.Write('#');
                     } else
@@ -60,12 +103,12 @@ namespace Day10
                 int y = int.Parse(match.Groups[2].Value);
                 int vx = int.Parse(match.Groups[3].Value);
                 int vy = int.Parse(match.Groups[4].Value);
-                return (x: x, y: y, vx: vx, vy: vy);
+                return new Particle(new IntPoint2D(x, y), new IntPoint2D(vx, vy));
             }).ToList();
 
             int time = 0;
             int maxDuration = 100000;
-            IEnumerable<(int x, int y, int vx, int vy)> particles = initialParticles;
+            IEnumerable<Particle> particles = initialParticles;
             int step = 100;
             int prevH = int.MaxValue;
             int prevW = int.MaxValue;
