@@ -126,7 +126,7 @@ namespace Day10
                         Console.Write('#');
                     } else
                     {
-                        Console.Write('.');
+                        Console.Write(' ');
                     }
                 }
                 Console.WriteLine("");
