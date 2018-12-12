@@ -10,13 +10,13 @@ namespace Day12
         struct GrowthPattern
         {
             public int LeftMost { get; private set; }
-            public int Gen { get; private set; }
+            public long Gen { get; private set; }
             public List<bool> Pattern { get; private set; }
 
             private static List<bool> Padding = new List<bool>() { false, false, false, false };
 
 
-            public GrowthPattern(int left, int gen, List<bool> pattern)
+            public GrowthPattern(int left, long gen, List<bool> pattern)
             {
                 LeftMost = left;
                 Gen = gen;
@@ -93,25 +93,16 @@ namespace Day12
             }
 
             GrowthPattern current = new GrowthPattern(0, 0, initial);
-            while (current.Gen < 20)
-            {
-                current = current.NextGen(rules);
-                current.Write();
-            }
-            Console.WriteLine($"{current.Sum}");
-            // guessed 4742, 8690
-            current = new GrowthPattern(0, 0, initial);
             long prevSum = current.Sum;
-            while (true)
+            const long step50B = 50000000000;
+            while (current.Gen < step50B)
             {
                 current = current.NextGen(rules);
-                //current.Write();
                 long sum = current.Sum;
-                long forecast = sum + (sum - prevSum) * (50000000000 - current.Gen);
+                long forecast = sum + (sum - prevSum) * (step50B - current.Gen);
                 prevSum = sum;
                 Console.WriteLine($"Gen: {current.Gen}, Sum: {sum}, forecast for 50B:th Gen: {forecast}");
             }
-            Console.WriteLine($"{current.Sum}");
         }
     }
 }
