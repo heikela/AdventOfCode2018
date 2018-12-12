@@ -7,22 +7,78 @@ namespace Day12
 {
     class Program
     {
-        static IEnumerable<bool> NextGen(List<bool> current, Dictionary<(bool, bool, bool, bool, bool), bool> rules)
+        struct GrowthPattern
         {
-            for (int i = 2; i < current.Count - 2; ++i)
+            public int LeftMost { get; private set; }
+            public int Gen { get; private set; }
+            public List<bool> Pattern { get; private set; }
+
+            private static List<bool> Padding = new List<bool>() { false, false, false, false };
+
+
+            public GrowthPattern(int left, int gen, List<bool> pattern)
             {
-                var key = (current[i - 2], current[i - 1], current[i], current[i + 1], current[i + 2]);
-                if (rules.ContainsKey(key))
+                LeftMost = left;
+                Gen = gen;
+                Pattern = pattern;
+            }
+
+            private IEnumerable<bool> NextGenEnumerable(Dictionary<(bool, bool, bool, bool, bool), bool> rules)
+            {
+                var padded = Padding.Concat(Pattern).Concat(Padding).ToList();
+                for (int i = 2; i < padded.Count - 2; ++i)
                 {
-                    yield return rules[key];
+                    var key = (padded[i - 2], padded[i - 1], padded[i], padded[i + 1], padded[i + 2]);
+                    if (rules.ContainsKey(key))
+                    {
+                        yield return rules[key];
+                    }
+                    else
+                    {
+                        yield return false;
+                    }
                 }
-                else
+                yield break;
+            }
+
+            public GrowthPattern NextGen(Dictionary<(bool, bool, bool, bool, bool), bool> rules)
+            {
+                return new GrowthPattern(
+                    LeftMost - 2,
+                    Gen + 1,
+                    NextGenEnumerable(rules).ToList());
+            }
+
+            public void Write()
+            {
+                if (Gen < 10)
                 {
-                    yield return false;
+                    Console.Write(' ');
+                }
+                Console.Write(Gen);
+                Console.Write(": ");
+                foreach (bool b in Pattern)
+                {
+                    Console.Write(b ? '#' : '.');
+                }
+                Console.WriteLine();
+            }
+
+            public int Sum { get
+                {
+                    int sum = 0;
+                    for (int i = 0; i < Pattern.Count; ++i)
+                    {
+                        if (Pattern[i])
+                        {
+                            sum += (i + LeftMost);
+                        }
+                    }
+                    return sum;
                 }
             }
-            yield break;
         }
+
 
         static void Main(string[] args)
         {
@@ -36,48 +92,22 @@ namespace Day12
                 rules.Add((bools[0], bools[1], bools[2], bools[3], bools[4]), line[9] == '#');
             }
 
-            int leftMost = 0;
-            int gen = 0;
-            List<bool> current = initial;
-            var padding = new List<bool>() { false, false, false, false };
-            if (gen < 10)
+            GrowthPattern current = new GrowthPattern(0, 0, initial);
+            while (current.Gen < 20)
             {
-                Console.Write(' ');
+                current = current.NextGen(rules);
+                current.Write();
             }
-            Console.Write(gen);
-            Console.Write(": ");
-            foreach (bool b in current)
-            {
-                Console.Write(b ? '#' : '.');
-            }
-            Console.WriteLine();
-            while (gen < 20)
-            {
-                gen++;
-
-                leftMost -= 2;
-                current = NextGen(padding.Concat(current).Concat(padding).ToList(), rules).ToList();
-                if (gen < 10)
-                {
-                    Console.Write(' ');
-                }
-                Console.Write(gen);
-                Console.Write(": ");
-                foreach (bool b in current) {
-                    Console.Write(b ? '#' : '.');
-                }
-                Console.WriteLine();
-            }
-            int sum = 0;
-            for (int i = 0; i < current.Count; ++i)
-            {
-                if (current[i])
-                {
-                    sum += (i + leftMost);
-                }
-            }
-            Console.WriteLine($"{sum}");
+            Console.WriteLine($"{current.Sum}");
             // guessed 4742, 8690
+            current = new GrowthPattern(0, 0, initial);
+            while (true)
+            {
+                current = current.NextGen(rules);
+                //current.Write();
+                Console.WriteLine($"Gen: {current.Gen}, Sum: {current.Sum}");
+            }
+            Console.WriteLine($"{current.Sum}");
         }
     }
 }
