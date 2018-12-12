@@ -101,11 +101,15 @@ namespace Day12
             Console.WriteLine($"{current.Sum}");
             // guessed 4742, 8690
             current = new GrowthPattern(0, 0, initial);
+            long prevSum = current.Sum;
             while (true)
             {
                 current = current.NextGen(rules);
                 //current.Write();
-                Console.WriteLine($"Gen: {current.Gen}, Sum: {current.Sum}");
+                long sum = current.Sum;
+                long forecast = sum + (sum - prevSum) * (50000000000 - current.Gen);
+                prevSum = sum;
+                Console.WriteLine($"Gen: {current.Gen}, Sum: {sum}, forecast for 50B:th Gen: {forecast}");
             }
             Console.WriteLine($"{current.Sum}");
         }
