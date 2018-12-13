@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 
 namespace Day13
 {
-    struct IntPoint2D
+    struct IntPoint2D : IEquatable<IntPoint2D>
     {
         public int X { get; set; }
         public int Y { get; set; }
@@ -31,19 +31,23 @@ namespace Day13
 
         public override bool Equals(object obj)
         {
-            if (obj.GetType() == this.GetType())
+            if (obj is IntPoint2D)
             {
-                return this == (IntPoint2D)obj;
+                return this.Equals((IntPoint2D)obj);
             }
             return false;
         }
+        public bool Equals(IntPoint2D p)
+        {
+            return X == p.X && Y == p.Y;
+        }
         public static bool operator ==(IntPoint2D a, IntPoint2D b)
         {
-            return a.X == b.X && a.Y == b.Y;
+            return a.Equals(b);
         }
         public static bool operator !=(IntPoint2D a, IntPoint2D b)
         {
-            return !(a == b);
+            return !(a.Equals(b));
         }
     }
 
