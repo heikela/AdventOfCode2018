@@ -54,6 +54,28 @@ namespace Day14
                 factory.Experiment();
             }
             string scoreAfter = factory.ScoreAfter(input);
+            factory = new ChocolateFactory();
+            int inputIndex = -1;
+            int i = 0;
+            string inputString = "793031";
+            while (inputIndex < 0)
+            {
+                while (!factory.HaveScoreAfter(i))
+                {
+                    factory.Experiment();
+                }
+                while (factory.HaveScoreAfter(i))
+                {
+                    string possible = factory.ScoreAfter(i).Substring(0, inputString.Length);
+                    if (possible == inputString)
+                    {
+                        inputIndex = i;
+                        break;
+                    }
+                    ++i;
+                }
+            }
+            Console.WriteLine($"Found {inputString} after {inputIndex} recipes.");
         }
     }
 }
