@@ -264,7 +264,8 @@ namespace Day15
                     }
                 }
             }
-            Console.WriteLine("End of time step.");
+            Turn++;
+            Console.WriteLine($"End of time step {Turn}.");
         }
 
         private IEnumerable<IntPoint2D> PathToNearest(IntPoint2D pos, IEnumerable<IntPoint2D> targets)
