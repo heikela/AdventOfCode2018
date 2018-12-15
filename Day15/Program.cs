@@ -139,14 +139,14 @@ namespace Day15
     {
         private int W;
         private int H;
-        Tile[,] Map;
-        List<Creature> Elves;
-        List<Creature> Goblins;
-        int Turn;
-        bool LastActionWasKill;
-        public bool ElvesKilled;
+        private Tile[,] Map;
+        private List<Creature> Elves;
+        private List<Creature> Goblins;
+        private int Turn;
+        private bool LastActionWasKill;
+        public bool ElvesKilled { get; private set; }
         private int ElfPower;
-        static readonly List<IntPoint2D> Adjacent = new List<IntPoint2D>() {
+        private static readonly List<IntPoint2D> Adjacent = new List<IntPoint2D>() {
             new IntPoint2D(0, -1),
             new IntPoint2D(-1, 0),
             new IntPoint2D(1, 0),
@@ -401,7 +401,6 @@ namespace Day15
                 }
             }
             Console.WriteLine($"Outcome when no elves die: {battle.Outcome()}");
-            // Tried 178003
         }
     }
 }
