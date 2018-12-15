@@ -143,6 +143,7 @@ namespace Day15
         List<Creature> Elves;
         List<Creature> Goblins;
         int Turn;
+        bool LastActionWasKill;
         static readonly List<IntPoint2D> Adjacent = new List<IntPoint2D>() {
             new IntPoint2D(0, -1),
             new IntPoint2D(-1, 0),
@@ -158,6 +159,7 @@ namespace Day15
             int y = 0;
             Elves = new List<Creature>();
             Goblins = new List<Creature>();
+            LastActionWasKill = false;
 
             foreach (string l in lines)
             {
@@ -195,13 +197,14 @@ namespace Day15
                 return -1;
             } else
             {
-                return Turn * Math.Max(Elves.Select(e => e.HP).Sum(), Goblins.Select(e => e.HP).Sum());
+                int duration = LastActionWasKill ? Turn : Turn - 1;
+                return duration * Math.Max(Elves.Select(e => e.HP).Sum(), Goblins.Select(e => e.HP).Sum());
             }
         }
 
         private bool Occupied(IntPoint2D p)
         {
-            return Map[p.X, p.Y].Terrain == '.' && Map[p.X, p.Y].HasCreature();
+            return Map[p.X, p.Y].Terrain == '#' || Map[p.X, p.Y].HasCreature();
         }
 
         public void Step()
@@ -213,9 +216,26 @@ namespace Day15
             {
                 if (c.HP > 0)
                 {
+                    LastActionWasKill = false;
                     Console.WriteLine($"Choosing a move for a/an {(c.IsElf() ? "elf" : "goblin")} at {c.Pos.X},{c.Pos.Y}.");
                     IEnumerable<Creature> enemies = c.IsElf() ? Goblins : Elves;
                     IEnumerable<Creature> adjacentEnemies = enemies.Where(e => e.Pos.ManhattanDist(c.Pos) == 1);
+                    if (adjacentEnemies.Count() == 0)
+                    {
+                        IEnumerable<IntPoint2D> adjacentToEnemy = enemies.SelectMany(e => Adjacent.Select(step => e.Pos + step)).Distinct();
+                        IEnumerable<IntPoint2D> adjacentAndFree = adjacentToEnemy.Where(p => !Occupied(p));
+                        IEnumerable<IntPoint2D> path = PathToNearest(c.Pos, adjacentAndFree);
+                        if (path.Count() > 0) {
+                            Console.WriteLine("Move");
+                            Map[c.Pos.X, c.Pos.Y].Creature = null;
+                            c.Pos = path.First();
+                            Map[c.Pos.X, c.Pos.Y].Creature = c;
+                        } else
+                        {
+                            Console.WriteLine("Pass");
+                        }
+                    }
+                    adjacentEnemies = enemies.Where(e => e.Pos.ManhattanDist(c.Pos) == 1);
                     if (adjacentEnemies.Count() > 0)
                     {
                         int minHP = int.MaxValue;
@@ -226,7 +246,8 @@ namespace Day15
                             {
                                 target = e;
                                 minHP = e.HP;
-                            } else if (e.HP == minHP)
+                            }
+                            else if (e.HP == minHP)
                             {
                                 if (e.Pos.Y < target.Pos.Y || (e.Pos.Y == target.Pos.Y && e.Pos.X < target.Pos.X))
                                 {
@@ -242,25 +263,18 @@ namespace Day15
                             if (target.IsElf())
                             {
                                 Elves.Remove(target);
-                            } else
+                            }
+                            else
                             {
                                 Goblins.Remove(target);
                             }
+                            Map[target.Pos.X, target.Pos.Y].Creature = null;
+                            LastActionWasKill = true;
                         }
-                    } else
+                    }
+                    else
                     {
-                        IEnumerable<IntPoint2D> adjacentToEnemy = enemies.SelectMany(e => Adjacent.Select(step => e.Pos + step)).Distinct();
-                        IEnumerable<IntPoint2D> adjacentAndFree = adjacentToEnemy.Where(p => !Occupied(p));
-                        IEnumerable<IntPoint2D> path = PathToNearest(c.Pos, adjacentAndFree);
-                        if (path.Count() > 0) {
-                            Console.WriteLine("Move");
-                            Map[c.Pos.X, c.Pos.Y].Creature = null;
-                            c.Pos = path.First();
-                            Map[c.Pos.X, c.Pos.Y].Creature = c;
-                        } else
-                        {
-                            Console.WriteLine("Pass");
-                        }
+                        Console.WriteLine("Pass");
                     }
                 }
             }
@@ -268,23 +282,56 @@ namespace Day15
             Console.WriteLine($"End of time step {Turn}.");
         }
 
+        public void PrintMap()
+        {
+            for (int y = 0; y < H; ++y)
+            {
+                Queue<Creature> creatures = new Queue<Creature>();
+                for (int x = 0; x < W; ++x)
+                {
+                    if (Map[x,y].Creature != null && Map[x,y].Creature.IsElf())
+                    {
+                        Console.Write('E');
+                        creatures.Enqueue(Map[x, y].Creature);
+                    }
+                    else if (Map[x, y].Creature != null && Map[x, y].Creature.IsGoblin())
+                    {
+                        Console.Write('G');
+                        creatures.Enqueue(Map[x, y].Creature);
+                    }
+                    else
+                    {
+                        Console.Write(Map[x, y].Terrain);
+                    }
+                }
+                while (creatures.Count > 0)
+                {
+                    Creature c = creatures.Dequeue();
+                    Console.Write($" {(c.IsElf() ? "E" : "G")}({c.HP})");
+                }
+                Console.WriteLine();
+            }
+        }
+
         private IEnumerable<IntPoint2D> PathToNearest(IntPoint2D pos, IEnumerable<IntPoint2D> targets)
         {
             IEnumerable<IntPoint2D> poss = new List<IntPoint2D>() { pos };
             HashSet<IntPoint2D> visited = new HashSet<IntPoint2D>(poss);
             Dictionary<IntPoint2D, int> stepsNeeded = new Dictionary<IntPoint2D, int>();
+            stepsNeeded.Add(pos, 0);
             int stepCount = 0;
             while (visited.Intersect(targets).Count() == 0 && poss.Count() > 0)
             {
                 stepCount++;
-                poss = poss
-                    .SelectMany(p => Adjacent.Select(move => p + move))
-                    .Where(p => !Occupied(p) && !visited.Contains(p))
-                    .Distinct();
+                var allSteps = poss
+                    .SelectMany(p => Adjacent.Select(move => p + move));
+                var newSteps = allSteps.Where(p => !Occupied(p) && !visited.Contains(p));
+                var distinctSteps = newSteps.Distinct();
+                poss = distinctSteps.ToList();
                 visited.UnionWith(poss);
                 foreach (IntPoint2D p in poss)
                 {
-                    stepsNeeded[p] = stepCount;
+                    stepsNeeded.Add(p, stepCount);
                 }
             }
             if (visited.Intersect(targets).Count() == 0)
@@ -298,7 +345,9 @@ namespace Day15
                 reversePath.Push(chosenTarget);
                 while (reversePath.Peek() != pos)
                 {
-                    IntPoint2D previousStep = Adjacent.Select(step => reversePath.Peek() + step).First();
+                    IntPoint2D current = reversePath.Peek();
+                    IntPoint2D previousStep = Adjacent.Select(step => current + step)
+                        .Where(p => stepsNeeded.GetValueOrDefault(p, -1) == stepsNeeded[current] - 1).First();
                     reversePath.Push(previousStep);
                 }
                 reversePath.Pop();
@@ -316,6 +365,7 @@ namespace Day15
             while (!battle.IsOver())
             {
                 battle.Step();
+                battle.PrintMap();
             }
             int outcome = battle.Outcome();
             Console.WriteLine($"Sample battle outcome: {outcome}");
