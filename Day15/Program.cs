@@ -144,13 +144,15 @@ namespace Day15
         List<Creature> Goblins;
         int Turn;
         bool LastActionWasKill;
+        public bool ElvesKilled;
+        private int ElfPower;
         static readonly List<IntPoint2D> Adjacent = new List<IntPoint2D>() {
             new IntPoint2D(0, -1),
             new IntPoint2D(-1, 0),
             new IntPoint2D(1, 0),
             new IntPoint2D(0, 1)
         };
-        public Battle(IEnumerable<string> lines)
+        public Battle(IEnumerable<string> lines, int elfPower = 3)
         {
             H = lines.Count();
             W = lines.Select(l => l.Length).Max();
@@ -160,6 +162,7 @@ namespace Day15
             Elves = new List<Creature>();
             Goblins = new List<Creature>();
             LastActionWasKill = false;
+            ElfPower = elfPower;
 
             foreach (string l in lines)
             {
@@ -217,7 +220,7 @@ namespace Day15
                 if (c.HP > 0)
                 {
                     LastActionWasKill = false;
-                    Console.WriteLine($"Choosing a move for a/an {(c.IsElf() ? "elf" : "goblin")} at {c.Pos.X},{c.Pos.Y}.");
+//                    Console.WriteLine($"Choosing a move for a/an {(c.IsElf() ? "elf" : "goblin")} at {c.Pos.X},{c.Pos.Y}.");
                     IEnumerable<Creature> enemies = c.IsElf() ? Goblins : Elves;
                     IEnumerable<Creature> adjacentEnemies = enemies.Where(e => e.Pos.ManhattanDist(c.Pos) == 1);
                     if (adjacentEnemies.Count() == 0)
@@ -226,13 +229,13 @@ namespace Day15
                         IEnumerable<IntPoint2D> adjacentAndFree = adjacentToEnemy.Where(p => !Occupied(p));
                         IEnumerable<IntPoint2D> path = PathToNearest(c.Pos, adjacentAndFree);
                         if (path.Count() > 0) {
-                            Console.WriteLine("Move");
+//                            Console.WriteLine("Move");
                             Map[c.Pos.X, c.Pos.Y].Creature = null;
                             c.Pos = path.First();
                             Map[c.Pos.X, c.Pos.Y].Creature = c;
                         } else
                         {
-                            Console.WriteLine("Pass");
+//                            Console.WriteLine("Pass");
                         }
                     }
                     adjacentEnemies = enemies.Where(e => e.Pos.ManhattanDist(c.Pos) == 1);
@@ -255,14 +258,16 @@ namespace Day15
                                 }
                             }
                         }
-                        target.HP -= DAMAGE;
-                        Console.WriteLine("Attack");
+                        int damage = c.IsElf() ? ElfPower : DAMAGE;
+                        target.HP -= damage;
+ //                       Console.WriteLine("Attack");
                         if (target.HP <= 0)
                         {
-                            Console.WriteLine("Kill");
+   //                         Console.WriteLine("Kill");
                             if (target.IsElf())
                             {
                                 Elves.Remove(target);
+                                ElvesKilled = true;
                             }
                             else
                             {
@@ -274,12 +279,12 @@ namespace Day15
                     }
                     else
                     {
-                        Console.WriteLine("Pass");
+//                        Console.WriteLine("Pass");
                     }
                 }
             }
             Turn++;
-            Console.WriteLine($"End of time step {Turn}.");
+//            Console.WriteLine($"End of time step {Turn}.");
         }
 
         public void PrintMap()
@@ -365,7 +370,7 @@ namespace Day15
             while (!battle.IsOver())
             {
                 battle.Step();
-                battle.PrintMap();
+//                battle.PrintMap();
             }
             int outcome = battle.Outcome();
             Console.WriteLine($"Sample battle outcome: {outcome}");
@@ -378,6 +383,25 @@ namespace Day15
             }
             outcome = battle.Outcome();
             Console.WriteLine($"Battle outcome: {outcome}");
+            int elfPower = 4;
+            while (true)
+            {
+                Console.WriteLine($"Trying battle with elf power: {elfPower}");
+                battle = new Battle(File.ReadLines("../../../input.txt"), elfPower);
+                while (!battle.IsOver() && !battle.ElvesKilled)
+                {
+                    battle.Step();
+                }
+                if (battle.ElvesKilled)
+                {
+                    ++elfPower;
+                } else
+                {
+                    break;
+                }
+            }
+            Console.WriteLine($"Outcome when no elves die: {battle.Outcome()}");
+            // Tried 178003
         }
     }
 }
