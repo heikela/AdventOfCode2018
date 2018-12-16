@@ -194,6 +194,50 @@ namespace Day16
             var samples = ParseSamples(input).ToList();
             IEnumerable<Sample> matchingThreeOrMore = samples.Where(s => s.MatchingMnemonics().Count() >= 3);
             Console.WriteLine($"{matchingThreeOrMore.Count()} samples match three or more instructions.");
+            HashSet<string>[] possibleInstructions = new HashSet<string>[16];
+            string[] definiteInstructions = new string[16];
+            for (int i = 0; i < 16; ++i)
+            {
+                possibleInstructions[i] = new HashSet<string>(Instruction.mnemonics);
+            }
+            foreach (Sample s in samples)
+            {
+                var possible = s.MatchingMnemonics();
+                possibleInstructions[s.Instruction.Opcode].IntersectWith(possible);
+            }
+            while (definiteInstructions.Where(m => m == null).Count() > 0)
+            {
+                int determined = Enumerable.Range(0, 16)
+                    .Where(i => possibleInstructions[i].Count == 1 && definiteInstructions[i] == null)
+                    .First();
+                Console.WriteLine($"Determined that Opcode {determined} corresponds to mnemonic {possibleInstructions[determined].First()}.");
+
+                definiteInstructions[determined] = possibleInstructions[determined].First();
+                for (int i = 0; i < 16; ++i)
+                {
+                    if (i != determined)
+                    {
+                        possibleInstructions[i].ExceptWith(possibleInstructions[determined]);
+                    }
+                }
+            }
+            for (int i = 0; i < 16; ++i)
+            {
+                Console.WriteLine($"Opcode {i} corresponds to mnemonic {definiteInstructions[i]}.");
+            }
+            var program = input.SkipWhile(s => s != "2 2 3 2");
+            var registers = new int[4];
+            foreach (string l in program)
+            {
+                var instructionMatch = Regex.Match(l, "(\\d+) +(\\d+) +(\\d+) +(\\d+)");
+                registers = Instruction.Execute(
+                    definiteInstructions[int.Parse(instructionMatch.Groups[1].Value)],
+                    int.Parse(instructionMatch.Groups[2].Value),
+                    int.Parse(instructionMatch.Groups[3].Value),
+                    int.Parse(instructionMatch.Groups[4].Value),
+                    registers);
+            }
+            Console.WriteLine($"At end of program, register 0 is {registers[0]}");
         }
     }
 }
