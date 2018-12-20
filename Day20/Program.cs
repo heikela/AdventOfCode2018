@@ -7,35 +7,6 @@ namespace Day20
 {
     class Program
     {
-        static int LengthWithoutShortcuts(IEnumerator<char> source)
-        {
-            int len = 0;
-            int maxAlternativeLen = 0;
-            while (true)
-            {
-                source.MoveNext();
-                switch (source.Current)
-                {
-                    case '^': break;
-                    case 'N':
-                    case 'E':
-                    case 'W':
-                    case 'S':
-                        ++len;
-                        break;
-                    case '(':
-                        len += LengthWithoutShortcuts(source);
-                        break;
-                    case '|':
-                        maxAlternativeLen = Math.Max(len, maxAlternativeLen);
-                        len = 0;
-                        break;
-                    case '$':
-                    case ')': return Math.Max(len, maxAlternativeLen);
-                }
-            }
-        }
-
         static void ParseInput((int x, int y) start, IEnumerator<char> source, Dictionary<(int x, int y), HashSet<(int x, int y)>> adjacency)
         {
             (int x, int y) current = start;
@@ -136,15 +107,10 @@ namespace Day20
             ParseInput((0, 0), "^ESSWWN(E|NNENN(EESS(WNSE|)SSS|WWWSSSSE(SW|NNNE)))$".GetEnumerator(), maze1);
             ParseInput((0, 0), sampleInput.GetEnumerator(), maze2);
             ParseInput((0, 0), input.GetEnumerator(), maze3);
-            /*            Console.WriteLine(LengthWithoutShortcuts("^ESSWWN(E|NNENN(EESS(WNSE|)SSS|WWWSSSSE(SW|NNNE)))$".GetEnumerator()));
-                        Console.WriteLine(LengthWithoutShortcuts(sampleInput.GetEnumerator()));
-                        Console.WriteLine(LengthWithoutShortcuts(input.GetEnumerator()));*/
             Console.WriteLine(DFSDepth((0, 0), maze1));
             Console.WriteLine(DFSDepth((0, 0), maze2));
             Console.WriteLine(DFSDepth((0, 0), maze3));
             Console.WriteLine(DFSFurtherThan1000((0, 0), maze3));
-            // wrong answer 3823. Makes sense assuming the shortest path to the furthest point is not the route it's reached in the regex
-            // itself.
         }
     }
 }
