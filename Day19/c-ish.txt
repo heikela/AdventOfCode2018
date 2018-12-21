@@ -1,0 +1,25 @@
+func f1(r3) {
+	r4 = 1
+	while (true) {
+		r1 = 1
+		while (true) {
+			r5 = r4 * r1
+			if (r5 == r3) {
+				r0 = r0 + r4
+			}
+			r1++
+			if (r1 == r3) {
+				break;
+			}
+		}
+		r4++
+		if (r4 > r3) {
+			break;
+		}
+	}
+	halt
+}
+
+main () {
+	
+}

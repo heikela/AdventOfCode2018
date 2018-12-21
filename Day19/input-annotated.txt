@@ -1,0 +1,37 @@
+#ip 2 // use register 2 as PC
+addi 2 16 2 // BBSTART 0: Goto 17
+seti 1 2 4 // 1: r41 = 1
+seti 1 8 1 // BBSTART 2: r11 = 1
+mulr 4 1 5 // BBSTART 3: r51 = r41 * r11
+eqrr 5 3 5 // 4: r52 = r51 == r3_0
+addr 5 2 2 // 5: if r52 Goto 7
+addi 2 1 2 // 6: GOTO 8
+addr 4 0 0 // BBSTART 7: r02 = r01 + r41
+addi 1 1 1 // BBSTART 8: r12 = r11 + 1
+gtrr 1 3 5 // 9: r53 = r12 == r3_0
+addr 2 5 2 // 10: if r53 Goto 12
+seti 2 6 2 // 11: Goto 3
+addi 4 1 4 // BBSTART 12: r42 = r41 + 1
+gtrr 4 3 5 // 13: r54 = r42 > r3_0
+addr 5 2 2 // 14: if r54 Goto 16
+seti 1 2 2 // 15: Goto 2
+mulr 2 2 2 // 16: Goto 257 = HALT
+addi 3 2 3 // BBSTART 17: r31 = r3_0 + 2 // r31 = 2 right from the start of the app
+mulr 3 3 3 // 18: r32 = r31 * r31 // r32 = 4 at the start
+mulr 2 3 3 // 19: r33 = 19 * r32 // r33 = 86 at the start
+muli 3 11 3 // 20: r34 = r33 * 11 // r34 = 946 at the start
+addi 5 2 5 // 21: r55 = r50 + 2 // r55 = 2 at the start
+mulr 5 2 5 // 22: r56 = r55 * 22 // r56 = 44 at the start
+addi 5 8 5 // 23: r57 = r56 + 8 // r57 = 52 at the start
+addr 3 5 3 // 24: r35 = r34 + r57 // r35 = 998 at the start
+addr 2 0 2 // 25: GOTO somewhere (later if registers aren't negative) based on r0?. at the start go to 27 in second time through
+seti 0 4 2 // 26: GOTO 1
+setr 2 5 5 //
+mulr 5 2 5
+addr 2 5 5
+mulr 2 5 5
+muli 5 14 5
+mulr 5 2 5
+addr 3 5 3
+seti 0 8 0
+seti 0 5 2 // 35: GOTO 1
