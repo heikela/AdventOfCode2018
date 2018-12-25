@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using System.IO;
 using System.Linq;
 using System.Collections.Generic;
+using System.Drawing;
 
 namespace Day17
 {
@@ -58,95 +59,183 @@ namespace Day17
         }
     }
 
-    class Program
-    {
-        static Area TopMost(Area a, Area b)
+    class WaterSim {
+        private HashSet<(int x, int y)> Heads;
+        private int MinY;
+        private int MaxY;
+        private int MinX;
+        private int MaxX;
+        private TileType[,] Ground;
+        public WaterSim(IEnumerable<string> lines)
         {
-            return a.MinY <= b.MinY ? a : b;
-        }
-        static Area LeftMost(Area a, Area b)
-        {
-            return a.MinX <= b.MinX ? a : b;
-        }
-        static Area RightMost(Area a, Area b)
-        {
-            return a.MaxX >= b.MaxY ? a : b;
-        }
-        static void Main(string[] args)
-        {
-            var lines = File.ReadLines("../../../input.txt");
+            Heads = new HashSet<(int, int)>();
+            Heads.Add((500, 0));
             var obstacles = new HashSet<Area>(lines.Select(l => Area.Parse(l)));
-            HashSet<(int x, int y)> heads = new HashSet<(int, int)>();
-            heads.Add((500, 0));
-            int minY = obstacles.Select(o => o.MinY).Min();
-            int maxY = obstacles.Select(o => o.MaxY).Max();
-            int minX = obstacles.Select(o => o.MinX).Min();
-            int maxX = obstacles.Select(o => o.MaxX).Max();
+            MinY = obstacles.Select(o => o.MinY).Min();
+            MaxY = obstacles.Select(o => o.MaxY).Max();
+            MinX = obstacles.Select(o => o.MinX).Min() - 1;
+            MaxX = obstacles.Select(o => o.MaxX).Max() + 1;
 
-            var ground = new TileType[maxX + 1, maxY + 1];
-
-            while (heads.Any())
+            Ground = new TileType[MaxX + 1, MaxY + 1];
+            foreach (Area o in obstacles)
             {
-                var currentHead = heads.First();
-                var x = currentHead.x;
-                heads.Remove(currentHead);
-                var below = obstacles
-                    .Where(o => o.MinX <= x && o.MaxX >= x && o.MaxY > currentHead.y);
-                if (below.Any())
+                for (int y = o.MinY; y <= o.MaxY; ++y)
                 {
-                    var bottom = below.Aggregate(TopMost);
-                    TileType type = TileType.Water;
-                    // Fill one row
-                    while (type == TileType.Water)
+                    for (int x = o.MinX; x <= o.MaxX; ++x)
                     {
-                        // TODO probably need to somehow aggregate adjacent clay and water as bottom
-                        int y = bottom.MinY + 1;
-                        var rowMinX = bottom.MinX - 1;
-                        var rowMaxX = bottom.MaxX + 1;
-                        var left = obstacles
-                            .Where(o => o.MinY <= y && o.MaxY >= y && o.MaxX < x);
-                        if (left.Any())
-                        {
-                            Area leftEdge = left.Aggregate(RightMost);
-                            if (leftEdge.MaxX >= rowMinX)
-                            {
-                                rowMinX = leftEdge.MaxX + 1;
-                            }
-                            else
-                            {
-                                type = TileType.Wet;
-                                heads.Add((rowMinX, y));
-                            }
-                        }
-                        var right = obstacles
-                            .Where(o => o.MinY <= y && o.MaxY >= y && o.MinX > x);
-                        if (right.Any())
-                        {
-                            Area rightEdge = right.Aggregate(LeftMost);
-                            if (rightEdge.MinX <= rowMaxX)
-                            {
-                                rowMaxX = rightEdge.MinX - 1;
-                            }
-                            else
-                            {
-                                type = TileType.Wet;
-                                heads.Add((rowMaxX, y));
-                            }
-                        }
-                        if (type == TileType.Water)
-                        {
-                            obstacles.Add(new Area(rowMinX, rowMaxX, y, y, type));
-                        } else
-                        {
-
-                        }
+                        Ground[x, y] = o.Type;
                     }
-
-
                 }
             }
-            int wetSquares = 0;
+
+        }
+
+        private bool Permeable(int x, int y)
+        {
+            return Ground[x, y] == TileType.Sand || Ground[x, y] == TileType.Wet;
+        }
+
+        private bool Permeable((int x, int y) coords)
+        {
+            return Permeable(coords.x, coords.y);
+        }
+
+        public void SaveImage(string filename)
+        {
+            var image = new Bitmap(MaxX + 1, MaxY + 1);
+            for (int y = 0; y <= MaxY; ++y)
+            {
+                for (int x = 0; x <= MaxX; ++x)
+                {
+                    switch (Ground[x, y])
+                    {
+                        case TileType.Clay:
+                            image.SetPixel(x, y, Color.FromName("Black"));
+                            break;
+                        case TileType.Sand:
+                            image.SetPixel(x, y, Color.FromName("SandyBrown"));
+                            break;
+                        case TileType.Wet:
+                            image.SetPixel(x, y, Color.FromName("LightBlue"));
+                            break;
+                        case TileType.Water:
+                            image.SetPixel(x, y, Color.FromName("DarkBlue"));
+                            break;
+                    }
+                }
+            }
+            image.Save(filename);
+        }
+
+        public void Solve()
+        {
+            while (Heads.Any())
+            {
+                var currentHead = Heads.First();
+                Heads.Remove(currentHead);
+                while (currentHead.y < MaxY && Ground[currentHead.x, currentHead.y + 1] == TileType.Sand)
+                {
+                    currentHead = (currentHead.x, currentHead.y + 1);
+                    Ground[currentHead.x, currentHead.y] = TileType.Wet;
+                }
+                if (currentHead.y == MaxY || Ground[currentHead.x, currentHead.y + 1] == TileType.Wet)
+                {
+                    continue;
+                }
+                bool enclosed = true;
+                var left = (x: currentHead.x - 1, y: currentHead.y);
+                while (Permeable(left) && !Permeable(left.x, left.y + 1))
+                {
+                    Ground[left.x, left.y] = TileType.Wet;
+                    left = (x: left.x - 1, y: left.y);
+                }
+                if (Permeable(left))
+                {
+                    enclosed = false;
+                }
+                if (Ground[left.x, left.y + 1] == TileType.Sand)
+                {
+                    Ground[left.x, left.y] = TileType.Wet;
+                    Heads.Add(left);
+                }
+                var right = (x: currentHead.x + 1, y: currentHead.y);
+                while (Permeable(right) && !Permeable(right.x, right.y + 1))
+                {
+                    Ground[right.x, right.y] = TileType.Wet;
+                    right = (x: right.x + 1, y: right.y);
+                }
+                if (Permeable(right))
+                {
+                    enclosed = false;
+                }
+                if (Ground[right.x, right.y + 1] == TileType.Sand)
+                {
+                    Ground[right.x, right.y] = TileType.Wet;
+                    Heads.Add(right);
+                }
+                if (enclosed)
+                {
+                    for (int x = left.x + 1; x < right.x; ++x)
+                    {
+                        Ground[x, currentHead.y] = TileType.Water;
+                    }
+                    if (Permeable(currentHead.x, currentHead.y - 1))
+                    {
+                        Ground[currentHead.x, currentHead.y - 1] = TileType.Wet;
+                        Heads.Add((x: currentHead.x, y: currentHead.y - 1));
+                    }
+                }
+            }
+        }
+
+        public int Wet()
+        {
+            int wet = 0;
+            for (int y = MinY; y <= MaxY; ++y)
+            {
+                for (int x = MinX; x <= MaxX; ++x)
+                {
+                    if (Ground[x, y] == TileType.Water || Ground[x, y] == TileType.Wet)
+                    {
+                        ++wet;
+                    }
+                }
+            }
+            return wet;
+        }
+
+        public int StandingWater()
+        {
+            int wet = 0;
+            for (int y = MinY; y <= MaxY; ++y)
+            {
+                for (int x = MinX; x <= MaxX; ++x)
+                {
+                    if (Ground[x, y] == TileType.Water)
+                    {
+                        ++wet;
+                    }
+                }
+            }
+            return wet;
+        }
+
+    }
+
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            var lines = File.ReadLines("input.txt");
+            var puzzle = new WaterSim(lines);
+            puzzle.Solve();
+
+            int wetSquares = puzzle.Wet();
             Console.WriteLine($"Water can reach {wetSquares} tiles");
+            puzzle.SaveImage("output.png");
+            int waterSquares = puzzle.StandingWater();
+            Console.WriteLine($"Standing water can be found in {waterSquares} tiles");
+
         }
     }
 }

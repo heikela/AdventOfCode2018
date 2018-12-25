@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Day17": {
+      "commandName": "Project",
+      "workingDirectory": "$(SolutionDir)\\Day17"
+    }
+  }
+}
