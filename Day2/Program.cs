@@ -9,25 +9,12 @@ namespace Day2
         static void Main(string[] args)
         {
             var lines = File.ReadLines("../../../input.txt");
-            var letterGroups = lines.Select(line => line.GroupBy(c => c));
-            var letterGroupLengths = letterGroups
-                .Select(groupsForLine =>
-                    groupsForLine.Select<IGrouping<char, char>, int>(group => group.Count()));
+            var letterGroupLengths = lines
+                .Select(line => line.GroupBy(c => c))
+                .Select(groups => groups.Select(group => group.Count()));
 
-            int doubleCount = 0;
-            int tripleCount = 0;
-            foreach (string line in lines)
-            {
-                var charGroups = line.GroupBy(c => c);
-                if (charGroups.Count(group => group.Count() == 2) > 0)
-                {
-                    ++doubleCount;
-                }
-                if (charGroups.Count(group => group.Count() == 3) > 0)
-                {
-                    ++tripleCount;
-                }
-            }
+            int doubleCount = letterGroupLengths.Count(groups => groups.Any(length => length == 2));
+            int tripleCount = letterGroupLengths.Count(groups => groups.Any(length => length == 3));
             System.Console.WriteLine($"Checksum = {doubleCount * tripleCount}");
 
             string answer = null;
@@ -36,28 +23,18 @@ namespace Day2
             {
                 for (int j = i + 1; j < lineArray.Count(); ++j)
                 {
-                    var errors = 0;
-                    var matching = "";
-                    for (int c = 0; c < lineArray[i].Length; ++c)
+                    string candidate = string
+                        .Join<char>("",
+                            lineArray[i].Zip(lineArray[j],
+                            (a, b) => a == b ? new char[] { a } : new char[0]).SelectMany(chars => chars));
+                    if (candidate.Length == lineArray[i].Length - 1)
                     {
-                        if (lineArray[i][c] == lineArray[j][c])
-                        {
-                            matching += lineArray[i][c];
-                        }
-                        else
-                        {
-                            ++errors;
-                        }
-                    }
-                    if (errors == 1)
-                    {
-                        answer = matching;
+                        answer = candidate;
                         break;
                     }
                 }
             }
             System.Console.WriteLine($"Common code = {answer}");
-
         }
     }
 }
