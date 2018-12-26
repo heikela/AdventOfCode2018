@@ -4,43 +4,40 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-
 namespace Day3
 {
     class Program
     {
         static void Main(string[] args)
         {
-            const int fabricSize = 1000;
             var lines = File.ReadLines("../../../input.txt");
-            HashSet<int>[,] fabric = new HashSet<int>[fabricSize, fabricSize];
+            Dictionary<(int x, int y), HashSet<int>> fabric = new Dictionary<(int x, int y), HashSet<int>>();
             string pattern = "#(\\d+) @ (\\d+),(\\d+): (\\d+)x(\\d+)";
             HashSet<int> idsWithoutConflicts = new HashSet<int>();
             foreach (string line in lines)
             {
                 var match = Regex.Match(line, pattern);
                 int id = int.Parse(match.Groups[1].Value);
-                int x = int.Parse(match.Groups[2].Value);
-                int y = int.Parse(match.Groups[3].Value);
+                int l = int.Parse(match.Groups[2].Value);
+                int t = int.Parse(match.Groups[3].Value);
                 int w = int.Parse(match.Groups[4].Value);
                 int h = int.Parse(match.Groups[5].Value);
                 idsWithoutConflicts.Add(id);
-                for (var xx = x; xx < x + w; ++xx)
+                for (var x = l; x < l + w; ++x)
                 {
-                    for (var yy = y; yy < y + h; ++yy)
+                    for (var y = t; y < t + h; ++y)
                     {
-                        if (fabric[xx,yy] == null)
+                        if (!fabric.ContainsKey((x,y)))
                         {
-                            fabric[xx, yy] = new HashSet<int>();
+                            fabric.Add((x, y), new HashSet<int>());
                         }
-                        fabric[xx, yy].Add(id);
+                        fabric[(x, y)].Add(id);
                     }
-
                 }
             }
 
             int duplicated = 0;
-            foreach (HashSet<int> claims in fabric)
+            foreach (HashSet<int> claims in fabric.Values)
             {
                 if (claims != null && claims.Count() > 1)
                 {
