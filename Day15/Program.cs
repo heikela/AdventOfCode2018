@@ -3,62 +3,10 @@ using System.IO;
 using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Common;
 
 namespace Day15
 {
-    struct IntPoint2D : IEquatable<IntPoint2D>
-    {
-        public int X { get; set; }
-        public int Y { get; set; }
-        public IntPoint2D(int x, int y)
-        {
-            X = x;
-            Y = y;
-        }
-        public static IntPoint2D operator +(IntPoint2D a, IntPoint2D b)
-        {
-            return new IntPoint2D(a.X + b.X, a.Y + b.Y);
-        }
-        public static IntPoint2D operator -(IntPoint2D a, IntPoint2D b)
-        {
-            return new IntPoint2D(a.X - b.X, a.Y - b.Y);
-        }
-
-        public static IntPoint2D operator *(int m, IntPoint2D point)
-        {
-            return new IntPoint2D(point.X * m, point.Y * m);
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (obj is IntPoint2D)
-            {
-                return this.Equals((IntPoint2D)obj);
-            }
-            return false;
-        }
-        public bool Equals(IntPoint2D p)
-        {
-            return X == p.X && Y == p.Y;
-        }
-        public static bool operator ==(IntPoint2D a, IntPoint2D b)
-        {
-            return a.Equals(b);
-        }
-        public static bool operator !=(IntPoint2D a, IntPoint2D b)
-        {
-            return !(a.Equals(b));
-        }
-        public int ManhattanDist()
-        {
-            return Math.Abs(X) + Math.Abs(Y);
-        }
-        public int ManhattanDist(IntPoint2D other)
-        {
-            return (this - other).ManhattanDist();
-        }
-    }
-
     abstract class Creature
     {
         public int HP { get; set; }
