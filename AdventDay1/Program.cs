@@ -33,28 +33,9 @@ namespace AdventDay1
         static void Main(string[] args)
         {
             var lines = File.ReadLines("../../../input.txt");
-            var numbers = lines.Select(line => int.Parse(line)).ToList();
+            var numbers = lines.Select(line => int.Parse(line));
             var sum = numbers.Sum();
             Console.WriteLine(string.Format("Tune in to Frequency: {0}", sum));
-
-            var visited = new HashSet<int>();
-
-            bool found = false;
-            int currentFreq = 0;
-            while (!found)
-            {
-                var changes = numbers.GetEnumerator();
-                while (!found && changes.MoveNext())
-                {
-                    currentFreq += changes.Current;
-                    if (visited.Contains(currentFreq))
-                    {
-                        found = true;
-                    }
-                    visited.Add(currentFreq);
-                }
-            }
-            Console.WriteLine(string.Format("Tune in to Frequency: {0}", currentFreq));
 
             var repeatedNumbers = RepeatForever(numbers);
 
@@ -62,16 +43,14 @@ namespace AdventDay1
                 (freq:0, visited: ImmutableHashSet<int>.Empty, freqWasSeenBefore: false),
                 (previous, delta) => {
                     var freq = previous.freq + delta;
-                    bool repeated = previous.visited.Contains(freq);
                     return (
                         freq,
                         visited: previous.visited.Add(freq),
-                        freqWasSeenBefore: repeated
+                        freqWasSeenBefore: previous.visited.Contains(freq)
                     );
                 }
             );
             Console.WriteLine(string.Format("Tune in to Frequency: {0}", frequencies.First(res => res.freqWasSeenBefore).freq));
-
         }
     }
 }
