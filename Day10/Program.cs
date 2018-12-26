@@ -3,42 +3,10 @@ using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Common;
 
 namespace Day10
 {
-    struct IntPoint2D
-    {
-        public int X { get; set; }
-        public int Y { get; set; }
-        public IntPoint2D(int x, int y)
-        {
-            X = x;
-            Y = y;
-        }
-        public static IntPoint2D operator +(IntPoint2D a, IntPoint2D b)
-        {
-            return new IntPoint2D(a.X + b.X, a.Y + b.Y);
-        }
-        public static IntPoint2D operator -(IntPoint2D a, IntPoint2D b)
-        {
-            return new IntPoint2D(a.X - b.X, a.Y - b.Y);
-        }
-
-        public static IntPoint2D operator *(int m, IntPoint2D point)
-        {
-            return new IntPoint2D(point.X * m, point.Y * m);
-        }
-
-        public int ManhattanDist()
-        {
-            return Math.Abs(X) + Math.Abs(Y);
-        }
-        public int ManhattanDist(IntPoint2D other)
-        {
-            return (this - other).ManhattanDist();
-        }
-    }
-
     struct Particle
     {
         public IntPoint2D Pos { get; set; }
