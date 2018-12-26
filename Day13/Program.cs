@@ -2,55 +2,10 @@
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
+using Common;
 
 namespace Day13
 {
-    struct IntPoint2D : IEquatable<IntPoint2D>
-    {
-        public int X { get; set; }
-        public int Y { get; set; }
-        public IntPoint2D(int x, int y)
-        {
-            X = x;
-            Y = y;
-        }
-        public static IntPoint2D operator +(IntPoint2D a, IntPoint2D b)
-        {
-            return new IntPoint2D(a.X + b.X, a.Y + b.Y);
-        }
-        public static IntPoint2D operator -(IntPoint2D a, IntPoint2D b)
-        {
-            return new IntPoint2D(a.X - b.X, a.Y - b.Y);
-        }
-
-        public static IntPoint2D operator *(int m, IntPoint2D point)
-        {
-            return new IntPoint2D(point.X * m, point.Y * m);
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (obj is IntPoint2D)
-            {
-                return this.Equals((IntPoint2D)obj);
-            }
-            return false;
-        }
-        public bool Equals(IntPoint2D p)
-        {
-            return X == p.X && Y == p.Y;
-        }
-        public static bool operator ==(IntPoint2D a, IntPoint2D b)
-        {
-            return a.Equals(b);
-        }
-        public static bool operator !=(IntPoint2D a, IntPoint2D b)
-        {
-            return !(a.Equals(b));
-        }
-    }
-
     class Cart
     {
         public IntPoint2D Dir { get; set; }
@@ -86,12 +41,13 @@ namespace Day13
         private char[,] Grid;
         private Dictionary<IntPoint2D, Cart> Carts;
         private int Time;
+        private int W;
         public Simulation(IEnumerable<string> lines)
         {
             int h = lines.Count() + 1;
-            int w = lines.Select(l => l.Count()).Max() + 1;
+            W = lines.Select(l => l.Count()).Max() + 1;
 
-            Grid = new char[w, h];
+            Grid = new char[W, h];
             Carts = new Dictionary<IntPoint2D, Cart>();
             Time = 0;
 
@@ -131,6 +87,11 @@ namespace Day13
             }
         }
 
+        public int CartCount()
+        {
+            return Carts.Count;
+        }
+
         private void Log(string message, IntPoint2D pos)
         {
             Console.WriteLine($"Step: {Time} Pos: {pos.X},{pos.Y}. {message}");
@@ -139,84 +100,79 @@ namespace Day13
         public void Step()
         {
             Time++;
-            for (int y = 0; y < Grid.GetLength(1); ++y)
-            {
-                for (int x = 0; x < Grid.GetLength(0); ++x)
+            foreach (IntPoint2D pos in Carts.Keys.ToList().OrderBy(pos => pos.Y * W + pos.X)) {
+                if (Carts.ContainsKey(pos))
                 {
-                    IntPoint2D pos = new IntPoint2D(x, y);
-                    if (Carts.ContainsKey(pos))
+                    Cart cart = Carts[pos];
+                    if (cart.Step(Time))
                     {
-                        Cart cart = Carts[pos];
-                        if (cart.Step(Time))
+                        IntPoint2D dir = cart.Dir;
+                        IntPoint2D nextPos = pos + dir;
+                        if (Carts.ContainsKey(nextPos))
                         {
-                            IntPoint2D dir = cart.Dir;
-                            IntPoint2D nextPos = pos + dir;
-                            if (Carts.ContainsKey(nextPos))
-                            {
-                                Carts.Remove(nextPos);
-                                Carts.Remove(pos);
-                                Log($"Collision! {Carts.Count} carts remain.", nextPos);
-                            }
-                            else
-                            {
-                                Carts.Remove(pos);
-                                Carts.Add(nextPos, cart);
-                            }
-                            switch (Grid[nextPos.X, nextPos.Y])
-                            {
-                                case '/':
-                                    if (dir.X != 0)
+                            Carts.Remove(nextPos);
+                            Carts.Remove(pos);
+                            Log($"Collision! {Carts.Count} carts remain.", nextPos);
+                        }
+                        else
+                        {
+                            Carts.Remove(pos);
+                            Carts.Add(nextPos, cart);
+                        }
+                        switch (Grid[nextPos.X, nextPos.Y])
+                        {
+                            case '/':
+                                if (dir.X != 0)
+                                {
+                                    cart.TurnLeft();
+                                }
+                                else if (dir.Y != 0)
+                                {
+                                    cart.TurnRight();
+                                }
+                                else
+                                {
+                                    Log("Going off track!", nextPos);
+                                }
+                                break;
+                            case '\\':
+                                if (dir.X != 0)
+                                {
+                                    cart.TurnRight();
+                                }
+                                else if (dir.Y != 0)
+                                {
+                                    cart.TurnLeft();
+                                }
+                                else
+                                {
+                                    Log("Going off track!", nextPos);
+                                }
+                                break;
+                            case '+':
+                                {
+                                    int turnType = cart.Crossroads % 3;
+                                    cart.Crossroads++;
+                                    switch (turnType)
                                     {
-                                        cart.TurnLeft();
-                                    }
-                                    else if (dir.Y != 0)
-                                    {
-                                        cart.TurnRight();
-                                    }
-                                    else
-                                    {
-                                        Log("Going off track!", nextPos);
+                                        case 0:
+                                            cart.TurnLeft();
+                                            break;
+                                        case 1:
+                                            break;
+                                        case 2:
+                                            cart.TurnRight();
+                                            break;
+                                        default:
+                                            Log("No fourth option at crossings!", nextPos);
+                                            break;
                                     }
                                     break;
-                                case '\\':
-                                    if (dir.X != 0)
-                                    {
-                                        cart.TurnRight();
-                                    }
-                                    else if (dir.Y != 0)
-                                    {
-                                        cart.TurnLeft();
-                                    }
-                                    else
-                                    {
-                                        Log("Going off track!", nextPos);
-                                    }
-                                    break;
-                                case '+':
-                                    {
-                                        int turnType = cart.Crossroads % 3;
-                                        cart.Crossroads++;
-                                        switch (turnType)
-                                        {
-                                            case 0:
-                                                cart.TurnLeft();
-                                                break;
-                                            case 1:
-                                                break;
-                                            case 2:
-                                                cart.TurnRight();
-                                                break;
-                                            default:
-                                                Log("No fourth option at crossings!", nextPos);
-                                                break;
-                                        }
-                                        break;
-                                    }
-                                case ' ':
-                                    Log("Gone off track previously!", nextPos);
-                                    break;
-                                default: break;
-                            }
+                                }
+                            case ' ':
+                                Log("Gone off track previously!", nextPos);
+                                break;
+                            default: break;
                         }
                     }
                 }
@@ -234,11 +190,10 @@ namespace Day13
         {
             var lines = File.ReadLines("../../../input.txt");
             Simulation s = new Simulation(lines);
-            while (true)
+            while (s.CartCount() > 1)
             {
                 s.Step();
             }
-            Console.WriteLine("Hello World!");
         }
     }
 }
