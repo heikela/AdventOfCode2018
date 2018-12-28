@@ -154,12 +154,35 @@ namespace Day18
 //            var sim = new LumberSimulation(File.ReadLines("../../../sampleInput.txt"));
 //            sim.PrintGrid();
             int time = 0;
-            while (time < 1000000000)
+
+            Dictionary<int, int> seenValues = new Dictionary<int, int>();
+            List<int> valuesByTime = new List<int>();
+            seenValues.Add(sim.Value(), time);
+            valuesByTime.Add(sim.Value());
+
+            const int targetTime = 1000000000;
+            while (time < targetTime)
             {
                 ++time;
                 sim.Next();
-//                sim.PrintGrid();
-                Console.WriteLine($"{time}, {sim.Value()}");
+                //                sim.PrintGrid();
+                int value = sim.Value();
+                if (time == 10)
+                {
+                    Console.WriteLine($"Value after 10 minutes: {value}");
+                }
+                if (seenValues.ContainsKey(value)) {
+                    int minusOnePeriod = seenValues[value];
+                    int period = time - minusOnePeriod;
+                    int relevant = minusOnePeriod + (targetTime - minusOnePeriod) % period;
+                    seenValues[value] = time;
+                    Console.WriteLine($"Time: {time}, Period Candidate: {period} Time congruent with target: {relevant}, Value at congruent time: {valuesByTime[relevant]}");
+//                    Console.WriteLine($"If Detected periodicity is true (grids are periodic and not just values recurring by chance) this is the same value as step {targetTime} will have.");
+                } else
+                {
+                    seenValues.Add(value, time);
+                }
+                valuesByTime.Add(value);
             }
         }
     }
