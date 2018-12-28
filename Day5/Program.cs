@@ -41,11 +41,7 @@ namespace Day5
 
             Console.WriteLine($"Length of resulting polymer is {CollapsedLen(polymer)}");
 
-            HashSet<char> letters = new HashSet<char>();
-            foreach (char c in polymer.Select(c => char.ToLower(c)).Distinct())
-            {
-                letters.Add(c);
-            }
+            HashSet<char> letters = new HashSet<char>(polymer.Select(c => char.ToLower(c)));
 
             int minLen = polymer.Length;
             char minChar = '?';
@@ -58,7 +54,6 @@ namespace Day5
                     minLen = collapsedLen;
                     minChar = c;
                 }
-                Console.WriteLine($"Checked {c}. So far the best char to remove is {minChar}, resulting in len = {minLen}");
             }
             Console.WriteLine($"Best char to remove is {minChar}, resulting in len = {minLen}");
         }
