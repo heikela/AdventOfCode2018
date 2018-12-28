@@ -22,47 +22,6 @@ namespace Day10
         }
     }
 
-    public struct Span
-    {
-        public int Min { get; set; }
-        public int Max { get; set; }
-        public Span(int min, int max)
-        {
-            Min = min;
-            Max = max;
-        }
-        public static Span Inclusive(int a, int b)
-        {
-            if (a < b)
-            {
-                return new Span(a, b);
-            }
-            return new Span(b, a);
-        }
-        public static Span Inclusive(double a, double b)
-        {
-            if (a < b)
-            {
-                return new Span((int)Math.Floor(a), (int)Math.Ceiling(b));
-            }
-            return new Span((int)Math.Floor(b), (int)Math.Ceiling(a));
-        }
-        public static readonly Span Empty = new Span(int.MaxValue, int.MinValue);
-        public static readonly Span Maximal = new Span(int.MinValue, int.MaxValue);
-        public bool IsEmpty()
-        {
-            return Max < Min;
-        }
-        public bool Contains(int x)
-        {
-            return x >= Min && x <= Max;
-        }
-        public Span Intersect(Span other)
-        {
-            return new Span(Math.Max(Min, other.Min), Math.Min(Max, other.Max));
-        }
-    }
-
     class Program
     {
         static IEnumerable<Particle> Step(IEnumerable<Particle> prev, int dt = 1)
@@ -151,11 +110,11 @@ namespace Day10
                 {
                     if (Math.Abs(pair.Item1.Pos.Y - pair.Item2.Pos.Y) <= distanceThreshold)
                     {
-                        return Span.Maximal;
+                        return IntSpan.Maximal;
                     }
                     else
                     {
-                        return Span.Empty;
+                        return IntSpan.Empty;
                     }
                 }
                 else
@@ -166,7 +125,7 @@ namespace Day10
                     var t2 = Intercept(
                         pair.Item1.Vel.Y, pair.Item1.Pos.Y + distanceThreshold,
                         pair.Item2.Vel.Y, pair.Item2.Pos.Y);
-                    return Span.Inclusive(t1, t2);
+                    return IntSpan.Inclusive(t1, t2);
                 }
             });
 
